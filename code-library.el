@@ -19,7 +19,8 @@
   (let* ((code (get-region-or-thing 'defun))
 		 (library-base-file (or (cdr (assoc major-mode code-library-mode-file-alist))
 								"temp.org"))
-		 (library-file (file-concat code-library-path library-base-file))
+		 (library-file (concat code-library-path library-base-file))
+		 (export-file (file-name-nondirectory  (buffer-file-name)))
 		 (head (read-string "请输入这段代码的说明"))
 		 (code-major-mode (replace-regexp-in-string "-mode$" "" (format "%s" major-mode))))
 	(save-excursion 
@@ -28,7 +29,7 @@
 	  (newline)
 	  (insert (concat "* " head))
 	  (newline-and-indent)
-	  (insert (concat "#+BEGIN_SRC " code-major-mode))
+	  (insert (format "#+BEGIN_SRC %s :tangle %s" code-major-mode export-file))
 	  (newline-and-indent)
 	  (newline-and-indent)
 	  (insert "#+END_SRC")
