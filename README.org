@@ -1,0 +1,19 @@
+#+TITLE: README
+#+AUTHOR: lujun9972
+#+CATEGORY: code-library
+#+DATE: [2015-10-09 五 20:23]
+#+OPTIONS: ^:{}
+* code-library
+这是一个简单的使用org-mode来收集代码片段的工具. 使用步骤为:
+
++ 设置`code-library-path'
+
+该变量的值为存储代码片段文件的目录. 默认为"~/CodeLibrary"
+
++ 设置`code-library-mode-file-alist'
+
+该变量指定了哪种编程语言存放到哪个org文件中. 
+
+改变量的元素格式为'(major-mode . org-filename)
+
++ 使用时,在Emacs中选中要收集的代码块,然后运行M-x code-library-save-code. 然后输入代码说明并为代码设置tag即可
