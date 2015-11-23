@@ -3,7 +3,7 @@
 ;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 ;; Author: DarkSun <lujun9972@gmail.com>
-;; Created: 2015-11-03
+;; Created: 2015-11-23
 ;; Version: 0.1
 ;; Keywords: lisp, code
 
@@ -33,7 +33,7 @@
 
 ;;; Code:
 
-(defgroup code-library-group nil
+(defgroup code-library nil
   "code library group"
   :prefix "code-library-")
 
@@ -43,10 +43,12 @@
 										  (perl-mode . "perl.org")
 										  (dos-mode . "bat.org")
 										  (sh-mode . "bash.org"))
-  "Mapping the correspondence between major-mode and the snippet file")
+  "Mapping the correspondence between major-mode and the snippet file"
+  :group 'code-library)
 
-(defcustom code-library-path "~/CodeLibrary/"
-  "snippet files are stored in the directory")
+(defcustom code-library-directory "~/CodeLibrary/"
+  "snippet files are stored in the directory"
+  :group 'code-library)
 
 (defun code-library-save-code()
   "save the snippet."
@@ -57,7 +59,7 @@
          (code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
 		 (library-base-file (or (cdr (assoc major-mode code-library-mode-file-alist))
 								(concat code-major-mode ".org")))
-		 (library-file (concat code-library-path library-base-file))
+		 (library-file (concat (file-name-as-directory code-library-directory) library-base-file))
 		 (export-file (file-name-nondirectory  (buffer-file-name)))
 		 (head (read-string "Please enter this code description: ")))
 	(save-excursion 
