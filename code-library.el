@@ -76,3 +76,7 @@
 	  (org-edit-src-exit)
 	  (org-set-tags-command)              ;set tags
 	  (save-buffer))))
+
+(provide 'code-library)
+
+;;; code-library.el ends here
