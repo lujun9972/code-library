@@ -1,4 +1,4 @@
-;;; code-library.el --- use org-mode to manage the code blocks
+;;; code-library.el --- use org-mode to collect the code snippets
 
 ;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
@@ -29,26 +29,27 @@
 
 ;;; Commentary:
 
-;; code-library is a tool that use org-mode to manager code blocks.
+;; code-library is a tool that use org-mode to collect code snippets.
 
 ;;; Code:
 
 (defgroup code-library-group nil
   "code library group"
   :prefix "code-library-")
+
 (defcustom code-library-mode-file-alist '((c++-mode . "cpp.org")
 										  (emacs-lisp-mode . "elisp.org")
 										  (python-mode . "python.org")
 										  (perl-mode . "perl.org")
 										  (dos-mode . "bat.org")
 										  (sh-mode . "bash.org"))
-  "映射major-mode与保存代码片段文件的对应关系")
+  "Mapping the correspondence between major-mode and the snippet file")
 
 (defcustom code-library-path "~/CodeLibrary/"
-  "代码库文件存储的目录")
+  "snippet files are stored in the directory")
 
 (defun code-library-save-code()
-  "保存所选代码到代码库文件中"
+  "save the snippet."
   (interactive)
   (let* ((code (if (region-active-p)
                    (buffer-substring-no-properties (region-beginning) (region-end))
@@ -58,7 +59,7 @@
 								(concat code-major-mode ".org")))
 		 (library-file (concat code-library-path library-base-file))
 		 (export-file (file-name-nondirectory  (buffer-file-name)))
-		 (head (read-string "请输入这段代码的说明")))
+		 (head (read-string "Please enter this code description: ")))
 	(save-excursion 
 	  (find-file library-file)
 	  (end-of-buffer)
@@ -73,5 +74,5 @@
 	  (org-edit-src-code)
 	  (insert code)
 	  (org-edit-src-exit)
-	  (org-set-tags-command)              ;设置代码tags
+	  (org-set-tags-command)              ;set tags
 	  (save-buffer))))
