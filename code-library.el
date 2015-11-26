@@ -1,4 +1,4 @@
-;;; code-library.el --- use org-mode to collect the code snippets
+;;; code-library.el --- use org-mode to collect code snippets
 
 ;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
@@ -24,7 +24,7 @@
 
 ;;; Source code
 ;;
-;; typing-game's code can be found here:
+;; code-library's code can be found here:
 ;;   http://github.com/lujun9972/code-library
 
 ;;; Commentary:
