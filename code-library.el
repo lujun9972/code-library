@@ -38,46 +38,124 @@
   :prefix "code-library-")
 
 (defcustom code-library-mode-file-alist '((c++-mode . "cpp.org")
-										  (emacs-lisp-mode . "elisp.org")
-										  (python-mode . "python.org")
-										  (perl-mode . "perl.org")
-										  (dos-mode . "bat.org")
-										  (sh-mode . "bash.org"))
-  "Mapping the correspondence between major-mode and the snippet file"
+                                          (dos-mode . "bat.org")
+                                          (emacs-lisp-mode . "elisp.org")
+                                          (perl-mode . "perl.org")
+                                          (python-mode . "python.org")
+                                          (sh-mode . "bash.org")
+                                          (js-jsx-mode . "javascript.org")
+                                          (js-mode . "javascript.org")
+                                          (js2-jsx-mode . "javascript.org")
+                                          (js2-mode . "javascript.org"))
+
+  "Mapping the correspondence between `major-mode' and the snippet file."
   :group 'code-library)
 
 (defcustom code-library-directory "~/CodeLibrary/"
-  "snippet files are stored in the directory"
+  "Snippet files are stored in the directory."
   :group 'code-library)
 
+(defcustom code-library-use-tags-command t
+  "Automatically run `org-mode' tags prompt when saving a snippet."
+  :group 'code-library)
+
+(defun code-library-trim-left-margin ()
+  "Remove common line whitespace prefix."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((common-left-margin) )
+      (while (not (eobp))
+        (unless (save-excursion
+                  (looking-at "[[:space:]]*$"))
+          (back-to-indentation)
+          (setq common-left-margin
+                (min (or common-left-margin (current-column) ) (current-column))))
+        (forward-line))
+      (when (and common-left-margin (> common-left-margin 0))
+        (goto-char (point-min))
+        (while (not (eobp))
+          (delete-region (point)
+                         (+ (point)
+                            (min common-left-margin
+                                 (save-excursion
+                                   (back-to-indentation)
+                                   (current-column)))))
+          (forward-line))))))
+
+(defsubst code-library-buffer-substring (beginning end)
+  "Return the content between BEGINNING and END.
+
+Tabs are converted to spaces according to mode.
+
+The first line is whitespace padded if BEGINNING is positioned
+after the beginning of that line.
+
+Common left margin whitespaces are trimmed."
+  (let ((content (buffer-substring-no-properties beginning end))
+        (content-tab-width tab-width)
+        (content-column-start (save-excursion
+                                (goto-char beginning)
+                                (current-column))))
+    (with-temp-buffer
+      (let ((tab-width content-tab-width))
+        (insert (make-string content-column-start ?\s))
+        (insert content)
+        (untabify (point-min) (point-max))
+        (code-library-trim-left-margin)
+        (buffer-substring-no-properties (point-min) (point-max))))))
+
+
+(defun code-library-get-thing ()
+  "Return what's supposed to be saved to the conde library as a string."
+  (if (region-active-p)
+      (code-library-buffer-substring (region-beginning) (region-end))
+    (let ((bod (bounds-of-thing-at-point 'defun)) )
+      (if bod
+          (code-library-buffer-substring (car bod) (cdr bod))))))
+
+(defun code-library-create-snippet (head)
+  "Create and return a new org heading with source block.
+
+HEAD is the org mode heading"
+  (let ((content (code-library-get-thing))
+        (code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
+        (tangle-file (if (buffer-file-name) (file-name-nondirectory (buffer-file-name)))))
+    (with-temp-buffer
+      (insert content)
+      (org-escape-code-in-region (point-min) (point-max))
+      (unless (bolp)
+        (insert "\n"))
+      (insert "#+END_SRC\n")
+      (goto-char (point-min))
+      (insert (format "* %s\n" head))
+      (insert (format "#+BEGIN_SRC %s" code-major-mode))
+      (when tangle-file
+        (insert (format " :tangle %s" tangle-file)))
+      (insert "\n")
+      (buffer-string))))
+
+
 (defun code-library-save-code()
-  "save the snippet."
+  "Save the snippet to it's file location."
   (interactive)
-  (let* ((code (if (region-active-p)
-                   (buffer-substring-no-properties (region-beginning) (region-end))
-                 (thing-at-point 'defun)))
+  (let* ((head (read-string "Please enter this code description: " nil nil "Untitled"))
+         (snippet (code-library-create-snippet head))
          (code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
-		 (library-base-file (or (cdr (assoc major-mode code-library-mode-file-alist))
-								(concat code-major-mode ".org")))
-		 (library-file (concat (file-name-as-directory code-library-directory) library-base-file))
-		 (export-file (file-name-nondirectory  (buffer-file-name)))
-		 (head (read-string "Please enter this code description: ")))
-	(save-excursion 
-	  (find-file library-file)
-	  (end-of-buffer)
-	  (newline)
-	  (insert (concat "* " head))
-	  (newline-and-indent)
-	  (insert (format "#+BEGIN_SRC %s :tangle %s" code-major-mode export-file))
-	  (newline-and-indent)
-	  (newline-and-indent)
-	  (insert "#+END_SRC")
-	  (forward-line -1)                   ;上一行
-	  (org-edit-src-code)
-	  (insert code)
-	  (org-edit-src-exit)
-	  (org-set-tags-command)              ;set tags
-	  (save-buffer))))
+         (library-base-file (or (cdr (assoc major-mode code-library-mode-file-alist))
+                                (concat code-major-mode ".org")))
+         (library-file (expand-file-name library-base-file
+                                         (file-name-as-directory code-library-directory))))
+    (with-current-buffer
+        (find-file-noselect library-file)
+      (save-excursion
+        (goto-char (point-max))
+        (beginning-of-line)
+        (unless (looking-at "[[:space:]]*$")
+          (insert "\n"))
+        (insert snippet)
+        (when code-library-use-tags-command
+          (org-set-tags-command)))
+      (save-buffer))))
 
 (provide 'code-library)
 
