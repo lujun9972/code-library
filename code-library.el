@@ -59,6 +59,15 @@
   "Automatically run `org-mode' tags prompt when saving a snippet."
   :group 'code-library)
 
+(defcustom code-library-keep-indentation '(makefile-mode
+                                           makefile-gmake-mode)
+  "List of modes which will be keep tabs and indentation as is.
+
+Normally code-library removed tabs to normalise indentation
+because code can come from a range of sources where the
+formatting and buffer local tab width can be in use."
+  :group 'code-library)
+
 (defun code-library-trim-left-margin ()
   "Remove common line whitespace prefix."
   (save-excursion
@@ -69,7 +78,7 @@
                   (looking-at "[[:space:]]*$"))
           (back-to-indentation)
           (setq common-left-margin
-                (min (or common-left-margin (current-column) ) (current-column))))
+                (min (or common-left-margin (current-column)) (current-column))))
         (forward-line))
       (when (and common-left-margin (> common-left-margin 0))
         (goto-char (point-min))
@@ -82,7 +91,7 @@
                                    (current-column)))))
           (forward-line))))))
 
-(defsubst code-library-buffer-substring (beginning end)
+(defsubst code-library-buffer-substring (beginning end &optional keep-indent)
   "Return the content between BEGINNING and END.
 
 Tabs are converted to spaces according to mode.
@@ -90,7 +99,9 @@ Tabs are converted to spaces according to mode.
 The first line is whitespace padded if BEGINNING is positioned
 after the beginning of that line.
 
-Common left margin whitespaces are trimmed."
+Common left margin whitespaces are trimmed.
+
+If KEEP-INDENT is t, tabs and indentation will be kept."
   (let ((content (buffer-substring-no-properties beginning end))
         (content-tab-width tab-width)
         (content-column-start (save-excursion
@@ -98,20 +109,24 @@ Common left margin whitespaces are trimmed."
                                 (current-column))))
     (with-temp-buffer
       (let ((tab-width content-tab-width))
-        (insert (make-string content-column-start ?\s))
+        (unless keep-indent
+          (insert (make-string content-column-start ?\s)))
         (insert content)
-        (untabify (point-min) (point-max))
-        (code-library-trim-left-margin)
+        (unless keep-indent
+          (untabify (point-min) (point-max))
+          (code-library-trim-left-margin))
         (buffer-substring-no-properties (point-min) (point-max))))))
 
 
 (defun code-library-get-thing ()
   "Return what's supposed to be saved to the conde library as a string."
-  (if (region-active-p)
-      (code-library-buffer-substring (region-beginning) (region-end))
-    (let ((bod (bounds-of-thing-at-point 'defun)) )
-      (if bod
-          (code-library-buffer-substring (car bod) (cdr bod))))))
+  (let* ((keep-indent (member major-mode code-library-keep-indentation))
+         (bod (bounds-of-thing-at-point 'defun))
+         (r (cond
+             ((region-active-p) (cons (region-beginning) (region-end)))
+             (bod bod)
+             (t (cons (point-min) (point-max))))))
+    (code-library-buffer-substring (car r) (cdr r) keep-indent)))
 
 (defun code-library-create-snippet (head)
   "Create and return a new org heading with source block.
