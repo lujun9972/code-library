@@ -153,7 +153,8 @@ HEAD is the org mode heading"
 (defun code-library-save-code()
   "Save the snippet to it's file location."
   (interactive)
-  (let* ((head (read-string "Please enter this code description: " nil nil "Untitled"))
+  (let* ((keep-indent (member major-mode code-library-keep-indentation))
+         (head (read-string "Please enter this code description: " nil nil "Untitled"))
          (snippet (code-library-create-snippet head))
          (code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
          (library-base-file (or (cdr (assoc major-mode code-library-mode-file-alist))
@@ -162,6 +163,9 @@ HEAD is the org mode heading"
                                          (file-name-as-directory code-library-directory))))
     (with-current-buffer
         (find-file-noselect library-file)
+      (when (and keep-indent
+                 (not (buffer-local-value 'org-src-preserve-indentation (current-buffer))))
+        (add-file-local-variable 'org-src-preserve-indentation t))
       (save-excursion
         (goto-char (point-max))
         (beginning-of-line)
