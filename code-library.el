@@ -118,21 +118,20 @@ If KEEP-INDENT is t, tabs and indentation will be kept."
         (buffer-substring-no-properties (point-min) (point-max))))))
 
 
-(defun code-library-get-thing ()
+(defun code-library-get-thing (&optional keep-indent)
   "Return what's supposed to be saved to the conde library as a string."
-  (let* ((keep-indent (member major-mode code-library-keep-indentation))
-         (bod (bounds-of-thing-at-point 'defun))
+  (let* ((bod (bounds-of-thing-at-point 'defun))
          (r (cond
              ((region-active-p) (cons (region-beginning) (region-end)))
              (bod bod)
              (t (cons (point-min) (point-max))))))
     (code-library-buffer-substring (car r) (cdr r) keep-indent)))
 
-(defun code-library-create-snippet (head)
+(defun code-library-create-snippet (head &optional keep-indent)
   "Create and return a new org heading with source block.
 
 HEAD is the org mode heading"
-  (let ((content (code-library-get-thing))
+  (let ((content (code-library-get-thing keep-indent))
         (code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
         (tangle-file (if (buffer-file-name) (file-name-nondirectory (buffer-file-name)))))
     (with-temp-buffer
@@ -155,7 +154,7 @@ HEAD is the org mode heading"
   (interactive)
   (let* ((keep-indent (member major-mode code-library-keep-indentation))
          (head (read-string "Please enter this code description: " nil nil "Untitled"))
-         (snippet (code-library-create-snippet head))
+         (snippet (code-library-create-snippet head keep-indent))
          (code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
          (library-base-file (or (cdr (assoc major-mode code-library-mode-file-alist))
                                 (concat code-major-mode ".org")))
