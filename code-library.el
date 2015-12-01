@@ -164,7 +164,7 @@ HEAD is the org mode heading"
         (find-file-noselect library-file)
       (when (and keep-indent
                  (not (buffer-local-value 'org-src-preserve-indentation (current-buffer))))
-        (add-file-local-variable 'org-src-preserve-indentation t))
+        (add-file-local-variable-prop-line 'org-src-preserve-indentation t))
       (save-excursion
         (goto-char (point-max))
         (beginning-of-line)
