@@ -59,6 +59,13 @@
   "Automatically run `org-mode' tags prompt when saving a snippet."
   :group 'code-library)
 
+(defcustom code-library-downcased-org-keywords nil
+  "Control how org mode keywords are inserted.
+
+When set to t, #+BEGIN_SRC and #+END_SRC will be inserted as
+lower case instead."
+  :group 'code-library)
+
 (defcustom code-library-keep-indentation '(makefile-mode
                                            makefile-gmake-mode)
   "List of modes which will be keep tabs and indentation as is.
@@ -139,10 +146,20 @@ HEAD is the org mode heading"
       (org-escape-code-in-region (point-min) (point-max))
       (unless (bolp)
         (insert "\n"))
-      (insert "#+END_SRC\n")
+      (insert "#+"
+              (if code-library-downcased-org-keywords
+                  "end_src"
+                "END_SRC")
+              "\n")
       (goto-char (point-min))
       (insert (format "* %s\n" head))
-      (insert (format "#+BEGIN_SRC %s" code-major-mode))
+      (insert
+       "#+"
+       (if code-library-downcased-org-keywords
+           "begin_src"
+         "BEGIN_SRC")
+       " "
+       code-major-mode)
       (when tangle-file
         (insert (format " :tangle %s" tangle-file)))
       (insert "\n")
