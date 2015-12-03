@@ -68,6 +68,12 @@ because code can come from a range of sources where the
 formatting and buffer local tab width can be in use."
   :group 'code-library)
 
+(defcustom code-library-org-file-header "#+PROPERTY: eval no-export"
+  "Header to be inserted in org-files.
+
+This is automatically done by code-library before inserting
+snippets into empty or new .org files.")
+
 (defun code-library-trim-left-margin ()
   "Remove common line whitespace prefix."
   (save-excursion
@@ -148,6 +154,11 @@ HEAD is the org mode heading"
       (insert "\n")
       (buffer-string))))
 
+(defun code-library--newline-if-blankline ()
+  "add newline if point at blankline"
+  (when (and (char-before)
+             (not (char-equal ?\n (char-before))))
+    (newline)))
 
 (defun code-library-save-code()
   "Save the snippet to it's file location."
@@ -159,9 +170,16 @@ HEAD is the org mode heading"
          (library-base-file (or (cdr (assoc major-mode code-library-mode-file-alist))
                                 (concat code-major-mode ".org")))
          (library-file (expand-file-name library-base-file
-                                         (file-name-as-directory code-library-directory))))
+                                         (file-name-as-directory code-library-directory)))
+         (new-or-blank (or (not (file-exists-p library-file))
+                           (= 0 (nth 7 (file-attributes library-file))))))
     (with-current-buffer
-        (find-file-noselect library-file)
+        (find-file-noselect library-file) ;we can't just use (= 0 (buffer-size)), because find-file-hook or find-file-not-found-functions might change the buffer.
+      (when new-or-blank
+        (goto-char (point-max))
+        (code-library--newline-if-blankline)
+        (insert code-library-org-file-header)
+        (code-library--newline-if-blankline))
       (when (and keep-indent
                  (not (buffer-local-value 'org-src-preserve-indentation (current-buffer))))
         (add-file-local-variable-prop-line 'org-src-preserve-indentation t))
@@ -169,7 +187,7 @@ HEAD is the org mode heading"
         (goto-char (point-max))
         (beginning-of-line)
         (unless (looking-at "[[:space:]]*$")
-          (insert "\n"))
+          (newline))
         (insert snippet)
         (when code-library-use-tags-command
           (org-set-tags-command)))
