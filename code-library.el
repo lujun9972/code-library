@@ -168,19 +168,11 @@ HEAD is the org mode heading"
              (not (char-equal ?\n (char-before))))
     (newline)))
 
-(defun code-library-save-code()
+(defun code-library-save-code-to-file (library-file head &optional keep-indent)
   "Save the snippet to it's file location."
-  (interactive)
-  (let* ((keep-indent (member major-mode code-library-keep-indentation))
-         (head (read-string "Please enter this code description: " nil nil "Untitled"))
-         (snippet (code-library-create-snippet head keep-indent))
-         (code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
-         (library-base-file (or (cdr (assoc major-mode code-library-mode-file-alist))
-                                (concat code-major-mode ".org")))
-         (library-file (expand-file-name library-base-file
-                                         (file-name-as-directory code-library-directory)))
-         (new-or-blank (or (not (file-exists-p library-file))
-                           (= 0 (nth 7 (file-attributes library-file))))))
+  (let ((snippet (code-library-create-snippet head keep-indent))
+        (new-or-blank (or (not (file-exists-p library-file))
+                          (= 0 (nth 7 (file-attributes library-file))))))
     (with-current-buffer
         (find-file-noselect library-file) ;we can't just use (= 0 (buffer-size)), because find-file-hook or find-file-not-found-functions might change the buffer.
       (when new-or-blank
@@ -200,6 +192,18 @@ HEAD is the org mode heading"
         (when code-library-use-tags-command
           (org-set-tags-command)))
       (save-buffer))))
+
+(defun code-library-save-code()
+  "Save the snippet to it's file location."
+  (interactive)
+  (let* ((keep-indent (member major-mode code-library-keep-indentation))
+         (head (read-string "Please enter this code description: " nil nil "Untitled"))
+         (code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
+         (library-base-file (or (cdr (assoc major-mode code-library-mode-file-alist))
+                                (concat code-major-mode ".org")))
+         (library-file (expand-file-name library-base-file
+                                         (file-name-as-directory code-library-directory))))
+    (code-library-save-code-to-file library-file head keep-indent)))
 
 (provide 'code-library)
 
