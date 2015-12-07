@@ -72,13 +72,15 @@ formatting and buffer local tab width can be in use."
   "Header to be inserted in org-files.
 
 This is automatically done by code-library before inserting
-snippets into empty or new .org files.")
+snippets into empty or new .org files."
+  :group 'code-library)
 
 (defcustom code-library-keyword-format-function 'identity
   "This function will be used to format the org keyword.
 
 'downcase will lower case org mode keywords
-'upcase will upper case org mode keywords")
+'upcase will upper case org mode keywords"
+  :group 'code-library)
 
 (defun code-library-trim-left-margin ()
   "Remove common line whitespace prefix."
