@@ -6,6 +6,7 @@
 ;; Created: 2015-11-23
 ;; Version: 0.1
 ;; Keywords: lisp, code
+;; Package-Requires: ((gist "1.3.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -32,6 +33,8 @@
 ;; code-library is a tool that use org-mode to collect code snippets.
 
 ;;; Code:
+
+(require 'gist)
 
 (defgroup code-library nil
   "code library group"
@@ -80,6 +83,10 @@ snippets into empty or new .org files."
 
 'downcase will lower case org mode keywords
 'upcase will upper case org mode keywords"
+  :group 'code-library)
+
+(defcustom code-library-sync-to-gist nil
+  "synchronize to gist or not."
   :group 'code-library)
 
 (defun code-library-trim-left-margin ()
@@ -141,12 +148,11 @@ If KEEP-INDENT is t, tabs and indentation will be kept."
              (t (cons (point-min) (point-max))))))
     (code-library-buffer-substring (car r) (cdr r) keep-indent)))
 
-(defun code-library-create-snippet (head &optional keep-indent)
+(defun code-library-create-snippet (head content &optional keep-indent)
   "Create and return a new org heading with source block.
 
 HEAD is the org mode heading"
-  (let ((content (code-library-get-thing keep-indent))
-        (code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
+  (let ((code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
         (tangle-file (if (buffer-file-name) (file-name-nondirectory (buffer-file-name)))))
     (with-temp-buffer
       (insert content)
@@ -168,9 +174,9 @@ HEAD is the org mode heading"
              (not (char-equal ?\n (char-before))))
     (newline)))
 
-(defun code-library-save-code-to-file (library-file head &optional keep-indent)
+(defun code-library-save-code-to-file (library-file head content &optional keep-indent)
   "Save the snippet to it's file location."
-  (let ((snippet (code-library-create-snippet head keep-indent))
+  (let ((snippet (code-library-create-snippet head content keep-indent))
         (new-or-blank (or (not (file-exists-p library-file))
                           (= 0 (nth 7 (file-attributes library-file))))))
     (with-current-buffer
@@ -193,17 +199,34 @@ HEAD is the org mode heading"
           (org-set-tags-command)))
       (save-buffer))))
 
+(defun code-library-save-code-to-gist (head content &optional keep-indent)
+  "Save the snippet to it's file location."
+  (let* ((file (or (buffer-file-name) (buffer-name)))
+         (name (file-name-nondirectory file))
+         (ext (or (cdr (assoc major-mode gist-supported-modes-alist))
+                  (file-name-extension file)
+                  "txt"))
+         (fname (concat (file-name-sans-extension name) "." ext))
+         (files (list
+                 (make-instance 'gh-gist-gist-file
+                                :filename fname
+                                :content content))))
+    (gist-internal-new files nil head nil)))
+
 (defun code-library-save-code()
   "Save the snippet to it's file location."
   (interactive)
   (let* ((keep-indent (member major-mode code-library-keep-indentation))
          (head (read-string "Please enter this code description: " nil nil "Untitled"))
+         (content (code-library-get-thing keep-indent))
          (code-major-mode (replace-regexp-in-string "-mode$" "" (symbol-name major-mode)))
          (library-base-file (or (cdr (assoc major-mode code-library-mode-file-alist))
                                 (concat code-major-mode ".org")))
          (library-file (expand-file-name library-base-file
                                          (file-name-as-directory code-library-directory))))
-    (code-library-save-code-to-file library-file head keep-indent)))
+    (code-library-save-code-to-file library-file head content keep-indent)
+    (when code-library-sync-to-gist
+      (code-library-save-code-to-gist head content keep-indent))))
 
 (provide 'code-library)
 
