@@ -162,8 +162,8 @@ HEAD is the org mode heading"
       (insert "\n")
       (buffer-string))))
 
-(defun code-library--newline-if-blankline ()
-  "add newline if point at blankline"
+(defun code-library--newline-if-non-blankline ()
+  "add newline if point at non-blankline"
   (when (and (char-before)
              (not (char-equal ?\n (char-before))))
     (newline)))
@@ -177,9 +177,9 @@ HEAD is the org mode heading"
         (find-file-noselect library-file) ;we can't just use (= 0 (buffer-size)), because find-file-hook or find-file-not-found-functions might change the buffer.
       (when new-or-blank
         (goto-char (point-max))
-        (code-library--newline-if-blankline)
+        (code-library--newline-if-non-blankline)
         (insert code-library-org-file-header)
-        (code-library--newline-if-blankline))
+        (code-library--newline-if-non-blankline))
       (when (and keep-indent
                  (not (buffer-local-value 'org-src-preserve-indentation (current-buffer))))
         (add-file-local-variable-prop-line 'org-src-preserve-indentation t))
