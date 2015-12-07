@@ -74,6 +74,12 @@ formatting and buffer local tab width can be in use."
 This is automatically done by code-library before inserting
 snippets into empty or new .org files.")
 
+(defcustom code-library-keyword-format-function 'identity
+  "This function will be used to format the org keyword.
+
+'downcase will lower case org mode keywords
+'upcase will upper case org mode keywords")
+
 (defun code-library-trim-left-margin ()
   "Remove common line whitespace prefix."
   (save-excursion
@@ -145,12 +151,12 @@ HEAD is the org mode heading"
       (org-escape-code-in-region (point-min) (point-max))
       (unless (bolp)
         (insert "\n"))
-      (insert "#+END_SRC\n")
+      (insert (format "#+%s\n" (funcall code-library-keyword-format-function "END_SRC")))
       (goto-char (point-min))
       (insert (format "* %s\n" head))
-      (insert (format "#+BEGIN_SRC %s" code-major-mode))
+      (insert (format "#+%s %s" (funcall code-library-keyword-format-function "BEGIN_SRC") code-major-mode))
       (when tangle-file
-        (insert (format " :tangle %s" tangle-file)))
+        (insert (format " :%s %s" (funcall code-library-keyword-format-function "tangle") tangle-file)))
       (insert "\n")
       (buffer-string))))
 
