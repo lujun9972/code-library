@@ -213,6 +213,7 @@ HEAD is the org mode heading"
                                 :content content))))
     (gist-internal-new files nil head nil)))
 
+;;;###autoload
 (defun code-library-save-code()
   "Save the snippet to it's file location."
   (interactive)
