@@ -1,0 +1,27 @@
+#+TITLE: README
+#+AUTHOR: lujun9972
+#+CATEGORY: code-library
+#+DATE: [2015-10-09 五 20:23]
+#+OPTIONS: ^:{}
+* Usage
+1. set value of `code-library-directory'
+
+   This variable specify the directory where Snippet files are stored.
+  
+   Default value is "~/CodeLibrary"
+
+2. set value of `code-library-mode-file-alist'
+
+   This variable mapping the correspondence between `major-mode' and the snippet file.
+
+   The element is like '(MAJOR-MODE . ORG-FILENAME)
+
+3. mark the snippet which you want to save and then ~M-x code-library-save-code~
+   
+   If the value of `code-library-use-tags-command' is not null, It will automatically run `org-mode' tags prompt when saving a snippet.
+   
+   If the value of `code-library-sync-to-gist' is not null, the snippet will also be stored to gist.
+
+   If the whitespace in code snippet should be preserved (such as Makefile snippet), the major-mode should be added into `code-library-keep-indentation'
+
+   If you want to add specified header to every new org-file, you can specify the `code-library-org-file-header' variable.
