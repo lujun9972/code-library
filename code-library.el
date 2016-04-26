@@ -1,6 +1,6 @@
 ;;; code-library.el --- use org-mode to collect code snippets
 
-;; Copyright (C) 2004-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2015 DarkSun <lujun9972@gmail.com>.
 
 ;; Author: DarkSun <lujun9972@gmail.com>
 ;; Created: 2015-11-23
