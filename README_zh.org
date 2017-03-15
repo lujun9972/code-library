@@ -6,7 +6,7 @@
 * code-library
 这是一个简单的使用org-mode来收集代码片段的工具. 使用步骤为:
 
-+ 设置`code-library-path'
++ 设置`code-library-directory'
 
   该变量的值为存储代码片段文件的目录. 默认为"~/CodeLibrary"
 
